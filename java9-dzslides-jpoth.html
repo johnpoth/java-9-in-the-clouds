@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html>
+<meta charset="utf-8">
+<title>Taking Java 9 in the clouds</title>
+
+<!-- Optional: on every page: header and footer -->
+<header>
+  Taking Java 9 in the clouds
+</header>
+
+<footer>by John Poth</footer>
+
+<!-- Your Slides -->
+<!-- One section is one slide -->
+<body>
+<section>
+    <!-- This is the first slide -->
+    <h1>Taking Java 9 in the clouds</h1>
+    <footer>by John Poth</footer>
+</section>
+
+<section>
+    <h2>John Poth</h2>
+    <p>Software Engineer @ Red Hat</p>
+    <p>Jboss Fuse Team</p>
+    <p>@pothjohn</p>
+    <p>github.com/johnpoth</p>
+</section>
+
+<section>
+    <h3>Agenda</h3>
+    <p>Bringing your code to Java 9</p>
+    <p>Troubleshooting</p>
+    <p>New features</p>
+    <p>Demo: Java 9 in the clouds</p>
+</section>
+
+<section>
+    <h1>Bringing your code to Java 9</h1>
+</section>
+
+<section>
+    <h3>Upgrade Maven plugins</h3>
+    <ul>
+      <li> Maven  >= 3.0 
+      <li> Compiler 3.7.0
+      <li> Javadoc 2.10.4
+      <li> Surefire 2.20.1
+      <li> War 3.2.0
+      <li> Jar 3.0.2
+      <li> <a href="https://cwiki.apache.org/confluence/display/MAVEN/Java+9+-+Jigsaw">cwiki.apache.org/confluence/display/MAVEN/Java+9+-+Jigsaw</a>
+    </ul>
+</section>
+
+<section>
+  <!--<h3> Maven JDeps Plugin</h3>-->
+  <pre class="smaller large" style="padding:30px 0px 0px 0px">
+    <code class="xml">&lt;plugins&gt;
+  &lt;plugin&gt;
+    &lt;groupId&gt;org.apache.maven.plugins&lt;/groupId&gt;
+    &lt;artifactId&gt;maven-jdeps-plugin&lt;/artifactId&gt;
+    &lt;version&gt;3.1.0&lt;/version&gt;
+    &lt;executions&gt;
+      &lt;execution&gt;
+        &lt;goals&gt;
+          &lt;goal&gt;jdkinternals&lt;/goal&gt; 
+          &lt;goal&gt;test-jdkinternals&lt;/goal&gt;
+        &lt;/goals&gt;
+      &lt;/execution&gt;
+    &lt;/executions&gt;
+    &lt;configuration&gt;
+    &lt;/configuration&gt;
+  &lt;/plugin&gt;
+&lt;/plugins&gt;
+    </code>
+    </pre>
+</section>
+
+<section>
+    <h3>JEP 220 Modular Run-Time Images</h3>
+    <p class="small">Remove dependency on <del><span class="highlight">lib/rt.jar</span></del>, <del><span class="highlight">lib/tools.jar</span></del>, and <del><span class="highlight">lib/dt.jar </span></del>
+    as they no longer exist.</p>
+    <div style="padding: 0px 0px 0px 100px">
+    <pre class="pull-left">
+      <code class="xml">
+&lt;profile&gt;
+  &lt;id&gt;pre-jdk9&lt;/id&gt;
+  &lt;activation&gt;
+    &lt;jdk&gt;(,9)&lt;/jdk&gt;
+  &lt;/activation&gt;
+  ...
+&lt;/profile&gt;
+      </code>
+    </pre>
+    <pre class="pull-right">
+      <code class="xml">
+&lt;profile&gt;
+  &lt;id&gt;jdk9&lt;/id&gt;
+  &lt;activation&gt;
+    &lt;jdk&gt;9&lt;/jdk&gt;
+  &lt;/activation&gt;
+  ...
+&lt;/profile&gt;
+      </code>
+    </pre>
+    </div>
+</section>
+
+<section>
+    <h3>JEP 223: New Version-String Scheme</h3>
+    <p class="small">Search for occurences of <span class="highlight"> System.getProperty( "java.version" )</span> in your codebase.</p>
+    <div>
+    <pre class="smaller">      
+<code class="java">private static int getJavaVersion() {
+  String property = "java.specification.version";
+  String javaSpecVersion = System.getProperty( property );
+  if (javaSpecVersion.contains(".")) { //before jdk 9
+      return Integer.parseInt(javaSpecVersion.split("\\.")[1]);
+  }else {
+      return Integer.parseInt(javaSpecVersion);
+  }
+}</code>
+    </pre>
+    </div>
+</section>
+
+<section>
+    <h1>Troubleshooting</h1>
+</section>
+
+<section>
+    <h3>JEP 261: Module System</h3>
+    <p style="font-size:2rem">Class Not found Exceptions on JDK classes.</p>
+    <pre>
+    <code class="java" style="font-size:0.7rem">
+java.lang.NoClassDefFoundError: <em class="highlight">javax/xml/bind/annotation/XmlRootElement</em>
+at org.apache.camel.tools.apt.ModelAnnotationProcessor.process(ModelAnnotationProcessor.java:49)
+at jdk.compiler/com.sun.tools.javac.processing.JavacProcessingEnvironment.callProcessor(JavacProcessingEnvironment.java:968)
+at jdk.compiler/com.sun.tools.javac.processing.JavacProcessingEnvironment.discoverAndRunProcs(JavacProcessingEnvironment.java:884)
+at jdk.compiler/com.sun.tools.javac.processing.JavacProcessingEnvironment.access$2200(JavacProcessingEnvironment.java:108)
+at jdk.compiler/com.sun.tools.javac.processing.JavacProcessingEnvironment$Round.run(JavacProcessingEnvironment.java:1204)
+at jdk.compiler/com.sun.tools.javac.processing.JavacProcessingEnvironment.doProcessing(JavacProcessingEnvironment.java:1313)
+at jdk.compiler/com.sun.tools.javac.main.JavaCompiler.processAnnotations(JavaCompiler.java:1267)
+at jdk.compiler/com.sun.tools.javac.main.JavaCompiler.compile(JavaCompiler.java:943)
+at jdk.compiler/com.sun.tools.javac.main.Main.compile(Main.java:302)
+at jdk.compiler/com.sun.tools.javac.main.Main.compile(Main.java:162)
+at jdk.compiler/com.sun.tools.javac.Main.compile(Main.java:55)
+at jdk.compiler/com.sun.tools.javac.Main.main(Main.java:41)
+Caused by: java.lang.ClassNotFoundException: <em class="highlight">javax.xml.bind.annotation.XmlRootElement</em>
+at java.base/java.net.URLClassLoader.findClass(URLClassLoader.java:466)
+at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:543)
+at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:476)
+... 12 more</code>
+  </pre>
+</section>
+
+<section>
+    <h3>Scenario 1: During compilation</h3>
+    <pre>
+<code class="xml">&lt;plugin&gt;
+  &lt;groupId&gt;org.apache.maven.plugins&lt;/groupId&gt;
+  &lt;artifactId&gt;maven-compiler-plugin&lt;/artifactId&gt;
+  &lt;version&gt;3.6.1&lt;/version&gt;
+  &lt;configuration&gt;
+    &lt;source&gt;1.8&lt;/source&gt;
+    &lt;target&gt;1.8&lt;/target&gt;
+    &lt;fork&gt;true&lt;/fork&gt;
+    &lt;compilerArgs&gt;
+      &lt;arg&gt;-J--add-modules&lt;/arg&gt;
+      &lt;arg&gt;-Jjava.xml.bind&lt;/arg&gt;
+    &lt;/compilerArgs&gt;
+  &lt;/configuration&gt;
+&lt;/plugin&gt;</code>
+</section>
+
+<section>
+    <h3>Scenario 2: During Testing</h3>
+    <pre>
+  <code class="xml">&lt;plugin&gt;
+  &lt;groupId&gt;org.apache.maven.plugins&lt;/groupId&gt;
+  &lt;artifactId&gt;maven-surefire-plugin&lt;/artifactId&gt;
+  &lt;version&gt;2.19.1&lt;/version&gt;
+  &lt;configuration&gt;
+    &lt;argLine&gt;--add-modules java.xml.bind&lt;/argLine&gt;
+  &lt;/configuration&gt;
+&lt;/plugin&gt;</code>
+    </pre>
+</section>
+
+<section>
+    <h3>Scenario 3: Pluging which doesn't support forking (maven-jaxb2-plugin)</h3>
+        <pre class="next" next-order="1">
+  <code class="xml">&lt;dependency&gt;
+  &lt;groupId&gt;javax.xml.bind&lt;/groupId&gt;
+  &lt;artifactId&gt;jaxb-api&lt;/artifactId&gt;
+  &lt;version&gt;2.2.11&lt;/version&gt;
+&lt;/dependency&gt;</code>
+    </pre>
+    <pre class="next" next-order="2"><code>export MAVEN_OPTS="...--add-modules java.xml.bind"</code></pre>
+</section>
+
+<section>
+    <h1>New features</h1>
+</section>
+
+<section>
+    <h3>JEP 238: Multi-Release JAR Files</h3>
+    <pre><code class="java">jar root
+  - A.class
+  - B.class
+  - C.class
+  - D.class
+  - META-INF
+     - versions
+        - 9
+           - A.class
+           - B.class
+        - 10
+           - A.class</code></pre>
+</section>
+
+<section>
+    <h3>JEP 269: Convenience Factory Methods for Collections</h3>
+     <div style="position: relative;top: 50%;transform: translateY(-130%);">
+    <p>
+      <pre><code class="java">Set&lt;String&gt; set = Collections.unmodifiableSet(Stream.of("a", "b", "c").collect(toSet()));</code></pre>
+    </p>
+    <p>
+      <pre><code class="java next" next-order="1">Set&lt;String&gt; set = Set.of(&quot;a&quot;, &quot;b&quot;, &quot;c&quot;);
+List&lt;String&gt; list = List.of(a, b, c);
+Map&lt;String,String&gt; map = Map.of("foo", "bar");
+</code></pre>
+    </p>
+    </div>
+</section>
+
+<section>
+    <h3>JEP 102: Process API Updates</h3>
+    <pre><code class="java" style="font-size:0.85rem">// Get process java.lang.ProcessHandle/Process.java
+ProcessHandle.current();
+ProcessHandle.of(0);
+ProcessHandle.allProcesses();
+ProcessHandle.current().children();
+ProcessHandle.current().parent();
+
+// Get process info java.lang.ProcessHandle.Info
+ProcessHandle processHandle = getProcess();
+long pid = processHandle.pid();
+ProcessHandle.Info info = processHandle.info();
+Optional&lt;String&gt; commandLine = info.commandLine();
+Optional&lt;Instant&gt; instant = info.startInstant();
+Optional&lt;String&gt; user = info.user();
+Optional&lt;Duration&gt; duration = info.totalCpuDuration();
+
+// Execute task on processes
+CompletableFuture&lt;ProcessHandle&gt; future = processHandle.onExit();
+boolean success = processHandle.destroy();
+processHandle.destroyForcibly();
+      </code></pre>
+</section>
+
+<section>
+    <h3>JEP 222: jshell: The Java Shell (Read-Eval-Print Loop)</h3>
+    <ul>
+      <li> JShell tool - <a href="https://docs.oracle.com/javase/9/tools/jshell.htm">docs.oracle.com/javase/9/tools/jshell.htm</a>
+      <li> Jshell API - <a href="http://download.java.net/java/jdk9/docs/api/jdk.jshell-summary.html">download.java.net/java/jdk9/docs/api/jdk.jshell-summary.html</a>
+    </ul>
+</section>
+
+<section>
+    <h3>JShell tool</h3>
+     <img inline src="jshell.png" width="80%" style="margin:0px 2em 0px 2em">
+</section>
+
+<section>
+    <h3>JShell tool</h3>
+     <img inline src="listing.png" width="80%" height="65%" style="margin:0px 2em 0px 2em">
+</section>
+
+<section>
+    <h3>JShell API</h3>
+    <pre><code class="java">
+JShell myShell = JShell.builder()
+                          .out(System.out)
+                          .err(System.err)
+                          .in(System.in)
+                          .build();
+String input = new Scanner(System.in).nextLine();
+List&lt;SnippetEvent&gt; snippetEvents = myShell.eval(input);
+for (SnippetEvent snippetEvent : snippetEvents) {
+    System.out.println(snippetEvent.value());
+}
+myShell.close();
+      </code></pre>
+</section>
+
+<section>
+    <h3>JEP 261: Module System</h3>
+    <div class="center">
+        <pre class="smaller">
+<code class="java">ModuleDeclaration:
+{Annotation} [ open ] module Identifier { . Identifier}
+{ {ModuleDirective} }</code></pre>
+<pre><code class="java">ModuleDirective:
+requires {RequiresModifier} ModuleName ;
+exports PackageName [ to ModuleName { , ModuleName}] ;
+opens PackageName [ to ModuleName { , ModuleName}] ;
+uses TypeName ;
+provides TypeName with TypeName { , TypeName} ;</code></pre>
+      <pre><code class="java">RequiresModifier:
+(one of)
+transitive static</code></pre>
+    </div>
+</section>
+
+<section>
+    <h3>JEP 261: Module System</h3>
+        <pre class="smaller">
+<code class="java">module jdk.jshell {
+    requires java.logging;
+    ...
+
+    requires transitive java.compiler;
+    ...
+
+    exports jdk.jshell;
+    ...
+
+    uses jdk.jshell.spi.ExecutionControlProvider;
+
+    provides javax.tools.Tool with
+        jdk.internal.jshell.tool.JShellToolProvider;
+}</code></pre>
+</section>
+
+
+<section>
+    <h1>Demo: Java 9 in the clouds</h1>
+</section>
+
+<!-- Your Style -->
+<!-- Define the style of your presentation -->
+
+<!-- Maybe a font from http://www.google.com/webfonts ? -->
+<link href='http://fonts.googleapis.com/css?family=Oswald' rel='stylesheet'>
+
+<style>
+  html, .view body { background-color: black; counter-reset: slideidx; }
+  body, .view section {
+    background-color: white; border-radius: 12px;
+    font-family: 'Oswald', arial, serif;
+  }
+
+  section, .view head > title {
+      font-size: 2rem;
+  }
+
+  .view section:after {
+    counter-increment: slideidx;
+    content: counter(slideidx, decimal-leading-zero);
+    position: absolute; bottom: -80px; right: 100px;
+    color: white;
+  }
+
+
+  section pre code, section pre.literal {
+
+  font-family: Consolas, 'Liberation Mono', Courier, monospace;
+  font-size: .9em;
+  line-height: 1.3;
+  margin-bottom: 1em;
+  padding: 0.5em;
+  width: auto !important;
+  
+  overflow-y: auto;
+  /*overflow-x: auto;*/
+  /*max-height: 375px;*/
+  /*
+  border: 1px solid #CCC;
+  border-radius: 4px;
+  background: #F2F2F2;
+  */
+  border: 0 dotted #ccc;
+  border-width: 1px 0; 
+  background: transparent;
+  white-space: pre-wrap;
+  margin: 0px 2em 0px 2em ;
+    /*padding: 50px;*/
+
+}
+
+  .smallest {
+    font-size: .4em;
+  }
+
+  .smaller {
+    font-size: .7em;
+  }
+
+  .small {
+    font-size: .8em;
+  }
+
+  .pull-left {
+   display: inline-block;
+   vertical-align: middle;
+    padding: 0px 0px 0px 15px;
+  } 
+
+  .pull-right {
+   display: inline-block;
+   vertical-align: middle;
+    padding: 0px 0px 0px 15px;
+
+  }
+
+  .highlight {
+    background-color: yellow;
+  }
+
+  .view head > title {
+    color: white;
+    text-align: center;
+    margin: 1em 0 1em 0;
+  }
+
+  h1 {
+    margin: 120px 0 30px 0;
+    text-align: center;
+    font-size: 5rem;
+    color:#3FBFBF
+  }
+
+  h2 {
+    margin: 50px 50px 30px 50px;
+    text-align: right;
+  }
+
+  section > h3 {
+    margin: 50px 50px 30px 50px;
+    border-bottom: 0.1px solid;
+  }
+
+  ul, ol {
+      margin: 40px 100px 0 100px;
+  }
+
+  li > ul, ol {
+      margin: 0 0 15px 50px;
+      list-style-image: none; /* in case parent list has some */
+  }
+
+  mark.next:not([active]) {
+    visibility: visible; /* override the default behavior where next is hidden */
+    background-color: inherit; /* and disable highlighting instead */
+  }
+
+  p {
+    margin: 10px 75px 0 75px;
+    font-size: 3rem;
+  }
+
+  table {
+    margin: auto;
+    font-size:2.5rem;
+    text-align: center;
+  }
+
+  blockquote {
+    height: 100%;
+    background-color: black;
+    color: white;
+    font-size: 3.75rem;
+    padding: 50px;
+  }
+  blockquote:before {
+    content: open-quote;
+  }
+  blockquote:after {
+    content: close-quote;
+  }
+
+  /* Figures are displayed full-page, with the caption
+     on top of the image/video */
+  figure {
+    background-color: black;
+    width: 100%;
+    height: 100%;
+  }
+  figure > * {
+    position: absolute;
+  }
+  figure > img, figure > video {
+    width: 100%; height: 100%;
+  }
+  figcaption {
+    margin: 70px;
+    font-size: 3rem;
+  }
+
+  header {
+    background-color: #F3F4F8;
+    border-bottom: 1px solid #CCC;
+    padding-right: 10px;
+  }
+
+  footer {
+    background-color: #F3F4F8;
+    border-top: 1px solid #CCC;
+    padding-bottom: 4px; /* remember progress bar */
+    padding-right: 10px;
+  }
+
+  section footer {
+    padding: 10px;
+  }
+
+  /* Transition effect */
+  /* Feel free to change the transition effect for original
+     animations. See here:
+     https://developer.mozilla.org/en/CSS/CSS_transitions
+     How to use CSS3 Transitions: */
+  section {
+    transition: left 400ms linear 0s;
+  }
+  .view section {
+    transition: none;
+  }
+
+  .view section[aria-selected] {
+    border: 5px red solid;
+  }
+
+@media screen {
+  /* Before */
+  section { left: -150%; }
+  /* Now */
+  section[aria-selected] { left: 0; }
+  /* After */
+  section[aria-selected] ~ section { left: +150%; }
+}
+
+  /* The progressbar, at the bottom of the slides, show the global
+     progress of the presentation. */
+  #progress-bar {
+    height: 4px;
+    background: #AAA;
+  }
+/*
+
+github.com style (c) Vasily Polovnyov <vast@whiteants.net>
+
+*/
+
+.hljs {
+  font-size: 1.25rem;
+  display: block;
+  overflow-x: auto;
+  padding: 0.5em;
+  color: #333;
+  background: #f8f8f8;
+}
+
+.hljs-comment,
+.hljs-quote {
+  color: #998;
+  font-style: italic;
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-subst {
+  color: #333;
+  font-weight: bold;
+}
+
+.hljs-number,
+.hljs-literal,
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag .hljs-attr {
+  color: #008080;
+}
+
+.hljs-string,
+.hljs-doctag {
+  color: #d14;
+}
+
+.hljs-title,
+.hljs-section,
+.hljs-selector-id {
+  color: #900;
+  font-weight: bold;
+}
+
+.hljs-subst {
+  font-weight: normal;
+}
+
+.hljs-type,
+.hljs-class .hljs-title {
+  color: #458;
+  font-weight: bold;
+}
+
+.hljs-tag,
+.hljs-name,
+.hljs-attribute {
+  color: #000080;
+  font-weight: normal;
+}
+
+.hljs-regexp,
+.hljs-link {
+  color: #009926;
+}
+
+.hljs-symbol,
+.hljs-bullet {
+  color: #990073;
+}
+
+.hljs-built_in,
+.hljs-builtin-name {
+  color: #0086b3;
+}
+
+.hljs-meta {
+  color: #999;
+  font-weight: bold;
+}
+
+.hljs-deletion {
+  background: #fdd;
+}
+
+.hljs-addition {
+  background: #dfd;
+}
+
+.hljs-emphasis {
+  font-style: italic;
+}
+
+.hljs-strong {
+  font-weight: bold;
+}
+</style>
+
+<!-- {{{{ dzslides core
+#
+#
+#     __  __  __       .  __   ___  __
+#    |  \  / /__` |    | |  \ |__  /__`
+#    |__/ /_ .__/ |___ | |__/ |___ .__/ core :€
+#
+#
+# The following block of code is not supposed to be edited.
+# But if you want to change the behavior of these slides,
+# feel free to hack it!
+#
+-->
+
+<div id="progress-bar"></div>
+
+<!-- Default Style -->
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  [role="note"] { display: none; }
+  html {
+    font-size: 16px;
+  }
+  body {
+    width: 800px; height: 600px;
+    position: absolute; top: 50%; left: 50%;
+    overflow: hidden;
+    display: none;
+  }
+  .view body {
+    position: static;
+    margin: 0; padding: 0;
+    width: 100%; height: 100%;
+    display: inline-block;
+    overflow: visible; overflow-x: hidden;
+    /* undo Dz.onresize */
+    transform: none !important;
+  }
+  .view head, .view head > title { display: block }
+  section {
+    position: absolute;
+    pointer-events: none;
+    width: 100%; height: 100%;
+  }
+  .view section {
+    pointer-events: auto;
+    position: static;
+    width: 800px; height: 600px;
+    margin: -150px -200px;
+    float: left;
+
+    transform: scale(.4);
+  }
+  .view section > * { pointer-events: none; }
+  section[aria-selected] { pointer-events: auto; }
+  html { overflow: hidden; }
+  html.view { overflow: visible; }
+  body.loaded { display: block; }
+  .next:not([active]) {visibility: hidden; }
+  #progress-bar{
+    bottom: 0;
+    position: absolute;
+    transition: width 400ms linear 0s;
+  }
+  .view #progress-bar {
+    display: none;
+  }
+  header {
+    text-align: right;
+    position: absolute;
+    top: 0;
+    width: 100%;
+  }
+  footer {
+    text-align: right;
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+  }
+  .view header { display: none; }
+  .view footer { display: none; }
+
+@media print {
+  section {
+    transition: none;
+    transform: none;
+    position: static;
+    page-break-inside: avoid;
+  }
+  body { overflow: visible; }
+  #progress-bar{ display:none; }
+}
+
+/*
+   **************************************
+   Uncomment the following for 16:9 slides
+   ***************************************/
+
+  html { font-size: 12px; }
+  body { height: 450px; }
+  .view section {
+    height: 450px;
+    margin: -140px -200px;
+    transform: scale(.3);
+  }
+
+</style>
+
+<script>
+  var Dz = {
+    remoteWindows: [],
+    idx: -1,
+    step: 0,
+    html: null,
+    slides: null,
+    progressBar : null,
+    params: {
+      autoplay: "1"
+    }
+  };
+
+  Dz.init = function() {
+    document.body.className = "loaded";
+    this.slides = Array.prototype.slice.call($$("body > section"));
+    this.progressBar = $("#progress-bar");
+    this.html = document.body.parentNode;
+    this.setupParams();
+    this.onhashchange();
+    this.setupTouchEvents();
+    this.onresize();
+    this.setupView();
+  }
+
+  Dz.setupParams = function() {
+    var p = window.location.search.substr(1).split('&');
+    p.forEach(function(e, i, a) {
+      var keyVal = e.split('=');
+      Dz.params[keyVal[0]] = decodeURIComponent(keyVal[1]);
+    });
+  // Specific params handling
+    if (!+this.params.autoplay)
+      $$.forEach($$("video"), function(v){ v.controls = true });
+  }
+
+  Dz.onkeydown = function(aEvent) {
+    // Don't intercept keyboard shortcuts
+    if (aEvent.altKey
+      || aEvent.ctrlKey
+      || aEvent.metaKey
+      || aEvent.shiftKey) {
+      return;
+    }
+    if ( aEvent.keyCode == 37 // left arrow
+      || aEvent.keyCode == 38 // up arrow
+      || aEvent.keyCode == 33 // page up
+    ) {
+      aEvent.preventDefault();
+      this.back();
+    }
+    if ( aEvent.keyCode == 39 // right arrow
+      || aEvent.keyCode == 40 // down arrow
+      || aEvent.keyCode == 34 // page down
+    ) {
+      aEvent.preventDefault();
+      this.forward();
+    }
+    if (aEvent.keyCode == 35) { // end
+      aEvent.preventDefault();
+      this.goEnd();
+    }
+    if (aEvent.keyCode == 36) { // home
+      aEvent.preventDefault();
+      this.goStart();
+    }
+    if (aEvent.keyCode == 32) { // space
+      aEvent.preventDefault();
+      this.toggleContent();
+    }
+    if (aEvent.keyCode == 70) { // f
+      aEvent.preventDefault();
+      this.goFullscreen();
+    }
+    if (aEvent.keyCode == 79    //o
+     || aEvent.keyCode == 27    //Esc
+    ) {
+      aEvent.preventDefault();
+      this.toggleView();
+    }
+  }
+
+  /* Touch Events */
+
+  Dz.setupTouchEvents = function() {
+    var orgX, newX;
+    var tracking = false;
+
+    var db = document.body;
+    db.addEventListener("touchstart", start.bind(this), false);
+    db.addEventListener("touchmove", move.bind(this), false);
+
+    function start(aEvent) {
+      aEvent.preventDefault();
+      tracking = true;
+      orgX = aEvent.changedTouches[0].pageX;
+    }
+
+    function move(aEvent) {
+      if (!tracking) return;
+      newX = aEvent.changedTouches[0].pageX;
+      if (orgX - newX > 100) {
+        tracking = false;
+        this.forward();
+      } else {
+        if (orgX - newX < -100) {
+          tracking = false;
+          this.back();
+        }
+      }
+    }
+  }
+
+  Dz.setupView = function() {
+    document.body.addEventListener("click", function ( e ) {
+      if (!Dz.html.classList.contains("view")) return;
+      if (!e.target || e.target.nodeName != "SECTION") return;
+
+      Dz.html.classList.remove("view");
+      Dz.setCursor(Dz.slides.indexOf(e.target) + 1);
+    }, false);
+  }
+
+  /* Adapt the size of the slides to the window */
+
+  Dz.onresize = function() {
+    var db = document.body;
+    var sx = db.clientWidth / window.innerWidth;
+    var sy = db.clientHeight / window.innerHeight;
+    var transform = "scale(" + (1/Math.max(sx, sy)) + ")";
+    db.style.transform = transform;
+    db.style.marginTop = -db.clientHeight / 2 + "px";
+    db.style.marginLeft = -db.clientWidth / 2 + "px";
+  }
+
+
+  Dz.getNotes = function(aIdx) {
+    var s = $("section:nth-of-type(" + aIdx + ")");
+    var d = s.$("[role='note']");
+    return d ? d.innerHTML : "";
+  }
+
+  Dz.onmessage = function(aEvent) {
+    var argv = aEvent.data.split(" "), argc = argv.length;
+    argv.forEach(function(e, i, a) { a[i] = decodeURIComponent(e) });
+    var win = aEvent.source;
+    if (argv[0] === "REGISTER" && argc === 1) {
+      this.remoteWindows.push(win);
+      this.postMsg(win, "REGISTERED", document.title, this.slides.length);
+      this.postMsg(win, "CURSOR", this.idx + "." + this.step);
+      return;
+    }
+    if (argv[0] === "BACK" && argc === 1)
+      this.back();
+    if (argv[0] === "FORWARD" && argc === 1)
+      this.forward();
+    if (argv[0] === "START" && argc === 1)
+      this.goStart();
+    if (argv[0] === "END" && argc === 1)
+      this.goEnd();
+    if (argv[0] === "TOGGLE_CONTENT" && argc === 1)
+      this.toggleContent();
+    if (argv[0] === "SET_CURSOR" && argc === 2)
+      window.location.hash = "#" + argv[1];
+    if (argv[0] === "GET_CURSOR" && argc === 1)
+      this.postMsg(win, "CURSOR", this.idx + "." + this.step);
+    if (argv[0] === "GET_NOTES" && argc === 1)
+      this.postMsg(win, "NOTES", this.getNotes(this.idx));
+  }
+
+  Dz.toggleContent = function() {
+    // If a Video is present in this new slide, play it.
+    // If a Video is present in the previous slide, stop it.
+    var s = $("section[aria-selected]");
+    if (s) {
+      var video = s.$("video");
+      if (video) {
+        if (video.ended || video.paused) {
+          video.play();
+        } else {
+          video.pause();
+        }
+      }
+    }
+  }
+
+  Dz.setCursor = function(aIdx, aStep) {
+    // If the user change the slide number in the URL bar, jump
+    // to this slide.
+    aStep = (aStep != 0 && typeof aStep !== "undefined") ? "." + aStep : ".0";
+    window.location.hash = "#" + aIdx + aStep;
+  }
+
+  Dz.onhashchange = function() {
+    var cursor = window.location.hash.split("#"),
+        newidx = 1,
+        newstep = 0;
+    if (cursor.length == 2) {
+      newidx = ~~cursor[1].split(".")[0];
+      newstep = ~~cursor[1].split(".")[1];
+      if (newstep > Dz.slides[newidx - 1].$$('.next').length) {
+        newstep = 0;
+        newidx++;
+      }
+    }
+    this.setProgress(newidx, newstep);
+    if (newidx != this.idx) {
+      this.setSlide(newidx);
+    }
+    if (newstep != this.step) {
+      this.setIncremental(newstep);
+    }
+    for (var i = 0; i < this.remoteWindows.length; i++) {
+      this.postMsg(this.remoteWindows[i], "CURSOR", this.idx + "." + this.step);
+    }
+  }
+
+  Dz.back = function() {
+    if (this.idx == 1) {
+      return;
+    }
+    this.setCursor(this.idx - 1,
+                   this.slides[this.idx - 2].$$('.next[active]').length);
+  }
+
+  Dz.forward = function() {
+    if (this.idx >= this.slides.length &&
+        this.step >= this.slides[this.idx - 1].$$('.next').length) {
+        return;
+    }
+    if (this.html.classList.contains("view") ||
+        this.step >= this.slides[this.idx - 1].$$('.next').length) {
+      this.setCursor(this.idx + 1,
+                     this.slides[this.idx].$$('.next[active]').length);
+    } else {
+      this.setCursor(this.idx, this.step + 1);
+    }
+  }
+
+  Dz.goStart = function() {
+    this.setCursor(1, 0);
+  }
+
+  Dz.goEnd = function() {
+    var lastIdx = this.slides.length;
+    var lastStep = this.slides[lastIdx - 1].$$('.next').length;
+    this.setCursor(lastIdx, lastStep);
+  }
+
+  Dz.toggleView = function() {
+    this.html.classList.toggle("view");
+
+    if (this.html.classList.contains("view")) {
+      $("section[aria-selected]").scrollIntoView(true);
+    }
+  }
+
+  Dz.setSlide = function(aIdx) {
+    this.idx = aIdx;
+    var old = $("section[aria-selected]");
+    var next = $("section:nth-of-type("+ this.idx +")");
+    if (old) {
+      old.removeAttribute("aria-selected");
+      var video = old.$("video");
+      if (video) {
+        video.pause();
+      }
+    }
+    if (next) {
+      next.setAttribute("aria-selected", "true");
+      if (this.html.classList.contains("view")) {
+        next.scrollIntoView();
+      } else {
+        var video = next.$("video");
+        if (video && !!+this.params.autoplay) {
+          video.play();
+        }
+      }
+    } else {
+      // That should not happen
+      this.idx = -1;
+      // console.warn("Slide doesn't exist.");
+    }
+  }
+
+  Dz.setIncremental = function(aStep) {
+    this.step = aStep;
+    var incrementals = Array.prototype.slice.call(this.slides[this.idx - 1].$$('.next')).sort(function(a, b) {
+            return Number(a.getAttribute('next-order')) - Number(b.getAttribute('next-order'));
+          });
+    var next = incrementals[this.step - 1];
+    if (next) {
+      next.setAttribute('active', true);
+    } else {
+      this.setCursor(this.idx, 0);
+    }
+    return next;
+  }
+
+  Dz.goFullscreen = function() {
+    var html = $('html'),
+        requestFullscreen = html.requestFullscreen || html.requestFullScreen || html.mozRequestFullScreen || html.webkitRequestFullScreen;
+    if (requestFullscreen) {
+      requestFullscreen.apply(html);
+    }
+  }
+  
+  Dz.setProgress = function(aIdx, aStep) {
+    var slide = $("section:nth-of-type("+ aIdx +")");
+    if (!slide)
+      return;
+    var steps = slide.$$('.next').length + 1,
+        slideSize = 100 / (this.slides.length - 1),
+        stepSize = slideSize / steps;
+    this.progressBar.style.width = ((aIdx - 1) * slideSize + aStep * stepSize) + '%';
+  }
+  
+  Dz.postMsg = function(aWin, aMsg) { // [arg0, [arg1...]]
+    aMsg = [aMsg];
+    for (var i = 2; i < arguments.length; i++)
+      aMsg.push(encodeURIComponent(arguments[i]));
+    aWin.postMessage(aMsg.join(" "), "*");
+  }
+  
+  function init() {
+    Dz.init();
+    window.onkeydown = Dz.onkeydown.bind(Dz);
+    window.onresize = Dz.onresize.bind(Dz);
+    window.onhashchange = Dz.onhashchange.bind(Dz);
+    window.onmessage = Dz.onmessage.bind(Dz);
+  }
+
+  window.onload = init;
+
+  // Helpers
+  if (!Function.prototype.bind) {
+    Function.prototype.bind = function (oThis) {
+
+      // closest thing possible to the ECMAScript 5 internal IsCallable
+      // function 
+      if (typeof this !== "function")
+      throw new TypeError(
+        "Function.prototype.bind - what is trying to be fBound is not callable"
+      );
+
+      var aArgs = Array.prototype.slice.call(arguments, 1),
+          fToBind = this,
+          fNOP = function () {},
+          fBound = function () {
+            return fToBind.apply( this instanceof fNOP ? this : oThis || window,
+                   aArgs.concat(Array.prototype.slice.call(arguments)));
+          };
+
+      fNOP.prototype = this.prototype;
+      fBound.prototype = new fNOP();
+
+      return fBound;
+    };
+  }
+
+  var $ = (HTMLElement.prototype.$ = function(aQuery) {
+    return this.querySelector(aQuery);
+  }).bind(document);
+
+  var $$ = (HTMLElement.prototype.$$ = function(aQuery) {
+    return this.querySelectorAll(aQuery);
+  }).bind(document);
+
+  $$.forEach = function(nodeList, fun) {
+    Array.prototype.forEach.call(nodeList, fun);
+  }
+
+</script>
+<script>!function(e){var t="object"==typeof window&&window||"object"==typeof self&&self;"undefined"!=typeof exports?e(exports):t&&(t.hljs=e({}),"function"==typeof define&&define.amd&&define([],function(){return t.hljs}))}(function(e){function t(e){return e.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")}function n(e){return e.nodeName.toLowerCase()}function r(e,t){var n=e&&e.exec(t);return n&&0===n.index}function a(e){return E.test(e)}function c(e){var t,n,r,c,i=e.className+" ";if(i+=e.parentNode?e.parentNode.className:"",n=R.exec(i))return v(n[1])?n[1]:"no-highlight";for(t=0,r=(i=i.split(/\s+/)).length;r>t;t++)if(c=i[t],a(c)||v(c))return c}function i(e){var t,n={},r=Array.prototype.slice.call(arguments,1);for(t in e)n[t]=e[t];return r.forEach(function(e){for(t in e)n[t]=e[t]}),n}function s(e){var t=[];return function e(r,a){for(var c=r.firstChild;c;c=c.nextSibling)3===c.nodeType?a+=c.nodeValue.length:1===c.nodeType&&(t.push({event:"start",offset:a,node:c}),a=e(c,a),n(c).match(/br|hr|img|input/)||t.push({event:"stop",offset:a,node:c}));return a}(e,0),t}function o(e,r,a){function c(){return e.length&&r.length?e[0].offset!==r[0].offset?e[0].offset<r[0].offset?e:r:"start"===r[0].event?e:r:e.length?e:r}function i(e){l+="<"+n(e)+m.map.call(e.attributes,function(e){return" "+e.nodeName+'="'+t(e.value).replace('"',"&quot;")+'"'}).join("")+">"}function s(e){l+="</"+n(e)+">"}function o(e){("start"===e.event?i:s)(e.node)}for(var u=0,l="",f=[];e.length||r.length;){var g=c();if(l+=t(a.substring(u,g[0].offset)),u=g[0].offset,g===e){f.reverse().forEach(s);do{o(g.splice(0,1)[0]),g=c()}while(g===e&&g.length&&g[0].offset===u);f.reverse().forEach(i)}else"start"===g[0].event?f.push(g[0].node):f.pop(),o(g.splice(0,1)[0])}return l+t(a.substr(u))}function u(e){return e.v&&!e.cached_variants&&(e.cached_variants=e.v.map(function(t){return i(e,{v:null},t)})),e.cached_variants||e.eW&&[i(e)]||[e]}function l(e){function t(e){return e&&e.source||e}function n(n,r){return new RegExp(t(n),"m"+(e.cI?"i":"")+(r?"g":""))}function r(a,c){if(!a.compiled){if(a.compiled=!0,a.k=a.k||a.bK,a.k){var i={},s=function(t,n){e.cI&&(n=n.toLowerCase()),n.split(" ").forEach(function(e){var n=e.split("|");i[n[0]]=[t,n[1]?Number(n[1]):1]})};"string"==typeof a.k?s("keyword",a.k):N(a.k).forEach(function(e){s(e,a.k[e])}),a.k=i}a.lR=n(a.l||/\w+/,!0),c&&(a.bK&&(a.b="\\b("+a.bK.split(" ").join("|")+")\\b"),a.b||(a.b=/\B|\b/),a.bR=n(a.b),a.e||a.eW||(a.e=/\B|\b/),a.e&&(a.eR=n(a.e)),a.tE=t(a.e)||"",a.eW&&c.tE&&(a.tE+=(a.e?"|":"")+c.tE)),a.i&&(a.iR=n(a.i)),null==a.r&&(a.r=1),a.c||(a.c=[]),a.c=Array.prototype.concat.apply([],a.c.map(function(e){return u("self"===e?a:e)})),a.c.forEach(function(e){r(e,a)}),a.starts&&r(a.starts,c);var o=a.c.map(function(e){return e.bK?"\\.?("+e.b+")\\.?":e.b}).concat([a.tE,a.i]).map(t).filter(Boolean);a.t=o.length?n(o.join("|"),!0):{exec:function(){return null}}}}r(e)}function f(e,n,a,c){function i(e,t){var n,a;for(n=0,a=t.c.length;a>n;n++)if(r(t.c[n].bR,e))return t.c[n]}function s(e,t){if(r(e.eR,t)){for(;e.endsParent&&e.parent;)e=e.parent;return e}return e.eW?s(e.parent,t):void 0}function o(e,t){return!a&&r(t.iR,e)}function u(e,t){var n=w.cI?t[0].toLowerCase():t[0];return e.k.hasOwnProperty(n)&&e.k[n]}function p(e,t,n,r){var a='<span class="'+(r?"":L.classPrefix);return(a+=e+'">')+t+(n?"":M)}function b(){var e,n,r,a;if(!R.k)return t(k);for(a="",n=0,R.lR.lastIndex=0,r=R.lR.exec(k);r;)a+=t(k.substring(n,r.index)),(e=u(R,r))?(B+=e[1],a+=p(e[0],t(r[0]))):a+=t(r[0]),n=R.lR.lastIndex,r=R.lR.exec(k);return a+t(k.substr(n))}function d(){var e="string"==typeof R.sL;if(e&&!x[R.sL])return t(k);var n=e?f(R.sL,k,!0,C[R.sL]):g(k,R.sL.length?R.sL:void 0);return R.r>0&&(B+=n.r),e&&(C[R.sL]=n.top),p(n.language,n.value,!1,!0)}function h(){y+=null!=R.sL?d():b(),k=""}function m(e){y+=e.cN?p(e.cN,"",!0):"",R=Object.create(e,{parent:{value:R}})}function N(e,t){if(k+=e,null==t)return h(),0;var n=i(t,R);if(n)return n.skip?k+=t:(n.eB&&(k+=t),h(),n.rB||n.eB||(k=t)),m(n,t),n.rB?0:t.length;var r=s(R,t);if(r){var a=R;a.skip?k+=t:(a.rE||a.eE||(k+=t),h(),a.eE&&(k=t));do{R.cN&&(y+=M),R.skip||(B+=R.r),R=R.parent}while(R!==r.parent);return r.starts&&m(r.starts,""),a.rE?0:t.length}if(o(t,R))throw new Error('Illegal lexeme "'+t+'" for mode "'+(R.cN||"<unnamed>")+'"');return k+=t,t.length||1}var w=v(e);if(!w)throw new Error('Unknown language: "'+e+'"');l(w);var E,R=c||w,C={},y="";for(E=R;E!==w;E=E.parent)E.cN&&(y=p(E.cN,"",!0)+y);var k="",B=0;try{for(var A,_,j=0;R.t.lastIndex=j,A=R.t.exec(n);)_=N(n.substring(j,A.index),A[0]),j=A.index+_;for(N(n.substr(j)),E=R;E.parent;E=E.parent)E.cN&&(y+=M);return{r:B,value:y,language:e,top:R}}catch(e){if(e.message&&-1!==e.message.indexOf("Illegal"))return{r:0,value:t(n)};throw e}}function g(e,n){n=n||L.languages||N(x);var r={r:0,value:t(e)},a=r;return n.filter(v).forEach(function(t){var n=f(t,e,!1);n.language=t,n.r>a.r&&(a=n),n.r>r.r&&(a=r,r=n)}),a.language&&(r.second_best=a),r}function p(e){return L.tabReplace||L.useBR?e.replace(C,function(e,t){return L.useBR&&"\n"===e?"<br>":L.tabReplace?t.replace(/\t/g,L.tabReplace):""}):e}function b(e,t,n){var r=t?w[t]:n,a=[e.trim()];return e.match(/\bhljs\b/)||a.push("hljs"),-1===e.indexOf(r)&&a.push(r),a.join(" ").trim()}function d(e){var t,n,r,i,u,l=c(e);a(l)||(L.useBR?(t=document.createElementNS("http://www.w3.org/1999/xhtml","div"),t.innerHTML=e.innerHTML.replace(/\n/g,"").replace(/<br[ \/]*>/g,"\n")):t=e,u=t.textContent,r=l?f(l,u,!0):g(u),(n=s(t)).length&&(i=document.createElementNS("http://www.w3.org/1999/xhtml","div"),i.innerHTML=r.value,r.value=o(n,s(i),u)),r.value=p(r.value),e.innerHTML=r.value,e.className=b(e.className,l,r.language),e.result={language:r.language,re:r.r},r.second_best&&(e.second_best={language:r.second_best.language,re:r.second_best.r}))}function h(){if(!h.called){h.called=!0;var e=document.querySelectorAll("pre code");m.forEach.call(e,d)}}function v(e){return e=(e||"").toLowerCase(),x[e]||x[w[e]]}var m=[],N=Object.keys,x={},w={},E=/^(no-?highlight|plain|text)$/i,R=/\blang(?:uage)?-([\w-]+)\b/i,C=/((^(<[^>]+>|\t|)+|(?:\n)))/gm,M="</span>",L={classPrefix:"hljs-",tabReplace:null,useBR:!1,languages:void 0};return e.highlight=f,e.highlightAuto=g,e.fixMarkup=p,e.highlightBlock=d,e.configure=function(e){L=i(L,e)},e.initHighlighting=h,e.initHighlightingOnLoad=function(){addEventListener("DOMContentLoaded",h,!1),addEventListener("load",h,!1)},e.registerLanguage=function(t,n){var r=x[t]=n(e);r.aliases&&r.aliases.forEach(function(e){w[e]=t})},e.listLanguages=function(){return N(x)},e.getLanguage=v,e.inherit=i,e.IR="[a-zA-Z]\\w*",e.UIR="[a-zA-Z_]\\w*",e.NR="\\b\\d+(\\.\\d+)?",e.CNR="(-?)(\\b0[xX][a-fA-F0-9]+|(\\b\\d+(\\.\\d*)?|\\.\\d+)([eE][-+]?\\d+)?)",e.BNR="\\b(0b[01]+)",e.RSR="!|!=|!==|%|%=|&|&&|&=|\\*|\\*=|\\+|\\+=|,|-|-=|/=|/|:|;|<<|<<=|<=|<|===|==|=|>>>=|>>=|>=|>>>|>>|>|\\?|\\[|\\{|\\(|\\^|\\^=|\\||\\|=|\\|\\||~",e.BE={b:"\\\\[\\s\\S]",r:0},e.ASM={cN:"string",b:"'",e:"'",i:"\\n",c:[e.BE]},e.QSM={cN:"string",b:'"',e:'"',i:"\\n",c:[e.BE]},e.PWM={b:/\b(a|an|the|are|I'm|isn't|don't|doesn't|won't|but|just|should|pretty|simply|enough|gonna|going|wtf|so|such|will|you|your|they|like|more)\b/},e.C=function(t,n,r){var a=e.inherit({cN:"comment",b:t,e:n,c:[]},r||{});return a.c.push(e.PWM),a.c.push({cN:"doctag",b:"(?:TODO|FIXME|NOTE|BUG|XXX):",r:0}),a},e.CLCM=e.C("//","$"),e.CBCM=e.C("/\\*","\\*/"),e.HCM=e.C("#","$"),e.NM={cN:"number",b:e.NR,r:0},e.CNM={cN:"number",b:e.CNR,r:0},e.BNM={cN:"number",b:e.BNR,r:0},e.CSSNM={cN:"number",b:e.NR+"(%|em|ex|ch|rem|vw|vh|vmin|vmax|cm|mm|in|pt|pc|px|deg|grad|rad|turn|s|ms|Hz|kHz|dpi|dpcm|dppx)?",r:0},e.RM={cN:"regexp",b:/\//,e:/\/[gimuy]*/,i:/\n/,c:[e.BE,{b:/\[/,e:/\]/,r:0,c:[e.BE]}]},e.TM={cN:"title",b:e.IR,r:0},e.UTM={cN:"title",b:e.UIR,r:0},e.METHOD_GUARD={b:"\\.\\s*"+e.UIR,r:0},e}),hljs.registerLanguage("java",function(e){var t="false synchronized int abstract float private char boolean static null if const for true while long strictfp finally protected import native final void enum else break transient catch instanceof byte super volatile case assert short package default double public try this switch continue throws protected public private module requires exports do",n={cN:"number",b:"\\b(0[bB]([01]+[01_]+[01]+|[01]+)|0[xX]([a-fA-F0-9]+[a-fA-F0-9_]+[a-fA-F0-9]+|[a-fA-F0-9]+)|(([\\d]+[\\d_]+[\\d]+|[\\d]+)(\\.([\\d]+[\\d_]+[\\d]+|[\\d]+))?|\\.([\\d]+[\\d_]+[\\d]+|[\\d]+))([eE][-+]?\\d+)?)[lLfF]?",r:0};return{aliases:["jsp"],k:t,i:/<\/|#/,c:[e.C("/\\*\\*","\\*/",{r:0,c:[{b:/\w+@/,r:0},{cN:"doctag",b:"@[A-Za-z]+"}]}),e.CLCM,e.CBCM,e.ASM,e.QSM,{cN:"class",bK:"class interface",e:/[{;=]/,eE:!0,k:"class interface",i:/[:"\[\]]/,c:[{bK:"extends implements"},e.UTM]},{bK:"new throw return else",r:0},{cN:"function",b:"([À-ʸa-zA-Z_$][À-ʸa-zA-Z_$0-9]*(<[À-ʸa-zA-Z_$][À-ʸa-zA-Z_$0-9]*(\\s*,\\s*[À-ʸa-zA-Z_$][À-ʸa-zA-Z_$0-9]*)*>)?\\s+)+"+e.UIR+"\\s*\\(",rB:!0,e:/[{;=]/,eE:!0,k:t,c:[{b:e.UIR+"\\s*\\(",rB:!0,r:0,c:[e.UTM]},{cN:"params",b:/\(/,e:/\)/,k:t,r:0,c:[e.ASM,e.QSM,e.CNM,e.CBCM]},e.CLCM,e.CBCM]},n,{cN:"meta",b:"@[A-Za-z]+"}]}}),hljs.registerLanguage("xml",function(e){var t={eW:!0,i:/</,r:0,c:[{cN:"attr",b:"[A-Za-z0-9\\._:-]+",r:0},{b:/=\s*/,r:0,c:[{cN:"string",endsParent:!0,v:[{b:/"/,e:/"/},{b:/'/,e:/'/},{b:/[^\s"'=<>`]+/}]}]}]};return{aliases:["html","xhtml","rss","atom","xjb","xsd","xsl","plist"],cI:!0,c:[{cN:"meta",b:"<!DOCTYPE",e:">",r:10,c:[{b:"\\[",e:"\\]"}]},e.C("\x3c!--","--\x3e",{r:10}),{b:"<\\!\\[CDATA\\[",e:"\\]\\]>",r:10},{b:/<\?(php)?/,e:/\?>/,sL:"php",c:[{b:"/\\*",e:"\\*/",skip:!0}]},{cN:"tag",b:"<style(?=\\s|>|$)",e:">",k:{name:"style"},c:[t],starts:{e:"</style>",rE:!0,sL:["css","xml"]}},{cN:"tag",b:"<script(?=\\s|>|$)",e:">",k:{name:"script"},c:[t],starts:{e:"<\/script>",rE:!0,sL:["actionscript","javascript","handlebars","xml"]}},{cN:"meta",v:[{b:/<\?xml/,e:/\?>/,r:10},{b:/<\?\w+/,e:/\?>/}]},{cN:"tag",b:"</?",e:"/?>",c:[{cN:"name",b:/[^\/><\s]+/,r:0},t]}]}});</script>
+<script>hljs.initHighlightingOnLoad()</script>
+</body>
+</html>

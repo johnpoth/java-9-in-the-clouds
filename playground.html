@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+
+<meta charset="utf-8">
+<title>The Title Of Your Presentation</title>
+
+<!-- Optional: on every page: header and footer -->
+<header>
+  Taking Java 9 in the clouds
+  <style>
+     section pre code, section pre.literal {
+  font-family: Consolas, 'Liberation Mono', Courier, monospace;
+  font-size: .9em;
+  line-height: 1.3;
+  margin-bottom: 1em;
+  padding: 0.5em;
+  width: auto !important;
+  
+  /*overflow-y: auto;*/
+  /*overflow-x: auto;*/
+  /*max-height: 375px;*/
+  /*
+  border: 1px solid #CCC;
+  border-radius: 4px;
+  background: #F2F2F2;
+  */
+  border: 0 dotted #ccc;
+  border-width: 1px 0; 
+  background: transparent;
+  white-space: pre-wrap;
+}</style>
+</header>
+<body>
+<section>
+    <h3>JEP 261: Module System</h3>
+        <pre class="smaller">
+<code class="java">module jdk.jshell {
+    requires java.logging;
+    ...
+
+    requires transitive java.compiler;
+    ...
+
+    exports jdk.jshell;
+    ...
+
+    uses jdk.jshell.spi.ExecutionControlProvider;
+
+    provides javax.tools.Tool with
+        jdk.internal.jshell.tool.JShellToolProvider;
+}
+      </code></pre>
+</section>
+  
+
+</body>

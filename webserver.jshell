@@ -1,0 +1,12 @@
+import io.undertow.Undertow;
+import io.undertow.server.HttpHandler;
+import io.undertow.server.HttpServerExchange;
+import io.undertow.util.Headers;
+import java.nio.file.Paths;
+import io.undertow.server.handlers.resource.PathResourceManager;
+import static io.undertow.Handlers.resource;
+
+public Undertow startUndertowServer() {
+	Undertow server = Undertow.builder().addHttpListener(8080, "localhost").setHandler(resource(new PathResourceManager(Paths.get(System.getProperty("user.dir")), 100)).setDirectoryListingEnabled(true)).build();
+	return server;
+}
