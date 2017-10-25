@@ -1,0 +1,4 @@
+[submodule "spring-boot"]
+	path = fabric8-maven-plugin
+	url = https://github.com/johnpoth/fabric8-maven-plugin.git
+	branch = jdk-9
