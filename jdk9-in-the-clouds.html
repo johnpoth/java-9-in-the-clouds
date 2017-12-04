@@ -8,24 +8,28 @@
 <body>
 <section>
     <!-- This is the first slide -->
-    <h1>Taking Java 9 in the clouds</h1>
+    <h1 class="title">Taking Java 9 in the clouds</h1>
     <footer>by John Poth</footer>
 </section>
 
 <section>
     <h3>John Poth</h3>
-    <p> <i class="fa fa-users" aria-hidden="true"></i>Software Engineer @ Red Hat</p>
-    <p> <i class="fa fa-user-plus" aria-hidden="true"></i>JBoss Fuse Team</p>
-    <p> <i class="fa fa-twitter-square" aria-hidden="true"></i>@pothjohn</p>
-    <p> <i class="fa fa fa-github-square" aria-hidden="true"></i>github.com/johnpoth</p>
+    <div class="larger">
+      <p> <i class="fa fa-users" aria-hidden="true"></i>Software Engineer @ Red Hat</p>
+      <p> <i class="fa fa-user-plus" aria-hidden="true"></i>JBoss Fuse Team</p>
+      <p> <i class="fa fa-twitter-square" aria-hidden="true"></i>@pothjohn</p>
+      <p> <i class="fa fa fa-github-square" aria-hidden="true"></i>github.com/johnpoth</p>
+    </div>
 </section>
 
 <section>
     <h3>Agenda</h3>
-    <p><i class="fa fa-bolt" aria-hidden="true"></i>Bringing your code to Java 9</p>
-    <p><i class="fa fa-bolt" aria-hidden="true"></i>Troubleshooting</p>
-    <p><i class="fa fa-bolt" aria-hidden="true"></i>New features</p>
-    <p><i class="fa fa-bolt" aria-hidden="true"></i>Demo: Java 9 in the clouds</p>
+    <div class="larger">
+      <p><i class="fa fa-bolt" aria-hidden="true"></i>Bringing your code to Java 9</p>
+      <p><i class="fa fa-bolt" aria-hidden="true"></i>Troubleshooting</p>
+      <p><i class="fa fa-bolt" aria-hidden="true"></i>New features</p>
+      <p><i class="fa fa-bolt" aria-hidden="true"></i>Demo: Java 9 in the clouds</p>
+    </div>
 </section>
 
 <section>
@@ -34,7 +38,7 @@
 
 <section>
   <!--<h3> Maven JDeps Plugin</h3>-->
-  <pre class="smaller large" style="padding:30px 0px 0px 0px">
+  <pre class="smaller" style="padding:30px 0px 0px 0px">
     <code class="xml">&lt;plugins&gt;
   &lt;plugin&gt;
     &lt;groupId&gt;org.apache.maven.plugins&lt;/groupId&gt;
@@ -386,6 +390,11 @@ transitive static</code></pre>
     font-size: .7em;
   }
 
+  .larger {
+    margin: 30px 0px 0px 0px;
+    font-size: 1.5em;
+  }
+
   .fa {
     color:#95b3c6;
     margin: 0px 5px 0px 0px;
@@ -425,6 +434,10 @@ transitive static</code></pre>
     margin: 120px 0 30px 0;
     text-align: center;
     font-size: 5rem;
+    color: #546e7a;
+  }
+
+  .title {
     color:#3FBFBF;
   }
 
